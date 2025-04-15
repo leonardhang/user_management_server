@@ -64,9 +64,9 @@ public class AuthController {
             u.setPhoneNumber(request.getPhoneNumber());
             u.setPassword(request.getPassword());
             userService.createUser(u);
-            return (ResponseEntity<?>) ResponseEntity.ok();
+            return new ResponseEntity<>(u, HttpStatus.OK);
         } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("用户名或密码错误");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("注册失败");
         }
     }
 
