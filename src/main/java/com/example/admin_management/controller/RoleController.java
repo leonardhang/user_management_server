@@ -5,7 +5,11 @@ import com.example.admin_management.model.Role;
 import com.example.admin_management.service.RoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/roles")
@@ -22,8 +26,13 @@ public class RoleController {
 
     @PostMapping
     @Operation(summary = "创建角色", description = "创建角色")
-    public int createRole(@RequestBody Role role) {
-        return roleService.add(role);
+    public ResponseEntity<?> createRole(@RequestBody Role role) {
+        Role existRole = roleService.findRoleByName(role.getName());
+        if(existRole != null) {
+            return ResponseEntity.badRequest().body("角色名已存在");
+        }
+        int result = roleService.add(role);
+        return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
@@ -34,8 +43,13 @@ public class RoleController {
 
     @PutMapping
     @Operation(summary = "更新角色", description = "更新角色信息")
-    public int updateRole(@RequestBody Role role) {
-        return roleService.update(role);
+    public ResponseEntity<?> updateRole(@RequestBody Role role) {
+        Role existRole = roleService.findRoleByName(role.getName());
+        if(existRole != null && !Objects.equals(existRole.getId(), role.getId())) {
+            return ResponseEntity.badRequest().body("角色名已存在");
+        }
+        int result = roleService.update(role);
+        return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
 }

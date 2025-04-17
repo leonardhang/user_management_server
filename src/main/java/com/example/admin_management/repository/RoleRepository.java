@@ -2,7 +2,9 @@ package com.example.admin_management.repository;
 
 import com.example.admin_management.model.PageResponse;
 import com.example.admin_management.model.Role;
+import com.example.admin_management.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -30,6 +32,22 @@ public class RoleRepository {
         Integer totals = jdbcTemplate.queryForObject(countSql, Integer.class);
         int total = totals != null ? totals : 0;
         return new PageResponse<Role>(roles, total);
+    }
+
+    public Role findRoleByName(String roleName) {
+        try {
+            return jdbcTemplate.queryForObject("SELECT * FROM role where Name = ?",
+                    new Object[]{roleName},
+                    (rs, rowNum) -> {
+                        Role u = new Role();
+                        u.setId(rs.getInt("Id"));
+                        u.setName(rs.getString("Name"));
+                        u.setMemo(rs.getString("Memo"));
+                        return u;
+                    });
+        }catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
     }
 
     public int add(Role role) {

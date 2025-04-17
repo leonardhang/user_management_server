@@ -17,6 +17,8 @@ public class User {
     private Integer gender;
     private Date birthday;
     private LocalDateTime createTime;
+    private Integer departmentId;
+    private String departmentName;
 
     public String getId() {
         return this.id;
@@ -98,5 +100,21 @@ public class User {
         if(createTime != null) {
             this.createTime = createTime.toLocalDateTime();
         }
+    }
+
+    public Integer getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Integer departmentId) {
+        this.departmentId = departmentId;
+    }
+
+    public String getDepartmentName() {
+        return departmentName;
+    }
+
+    public void setDepartmentName(String departmentName) {
+        this.departmentName = departmentName;
     }
 }

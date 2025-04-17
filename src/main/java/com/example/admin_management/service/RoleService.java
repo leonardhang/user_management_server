@@ -19,6 +19,10 @@ public class RoleService {
         return roleRepository.add(role);
     }
 
+    public Role findRoleByName(String roleName) {
+        return roleRepository.findRoleByName(roleName.trim());
+    }
+
     public int deleteById(Integer roleId) {
         return roleRepository.deleteById(roleId);
     }

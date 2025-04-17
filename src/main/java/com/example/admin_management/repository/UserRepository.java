@@ -35,14 +35,14 @@ public class UserRepository {
     }
 
     public PageResponse<User> getUserListByPage(int pageIndex) {
-        String sql = "SELECT * FROM user ORDER BY Name, CreateTime LIMIT ? OFFSET ?";
+        String sql = "SELECT * FROM user u left join department p on u.DepartmentId=p.Id ORDER BY u.Name, u.CreateTime LIMIT ? OFFSET ?";
         String countSql = "SELECT COUNT(Id) FROM user";
 
         int offset = (pageIndex - 1) * PAGE_SIZE;
         List<User> users = jdbcTemplate.query(sql, new Object[]{PAGE_SIZE, offset}, (rs, rowNum) -> {
             User u = new User();
-            u.setId(rs.getString("Id"));
-            u.setName(rs.getString("Name"));
+            u.setId(rs.getString("u.Id"));
+            u.setName(rs.getString("u.Name"));
             u.setNickName(rs.getString("NickName"));
             u.setEmail(rs.getString("Email"));
             u.setPhoneNumber(rs.getString("PhoneNumber"));
@@ -50,6 +50,13 @@ public class UserRepository {
             u.setGender(rs.getInt("Gender"));
             u.setBirthday(rs.getDate("Birthday"));
             u.setCreateTime(rs.getTimestamp("CreateTime"));
+            int departmentId = rs.getInt("DepartmentId");
+            if (rs.wasNull()) {
+                u.setDepartmentId(null);
+            } else {
+                u.setDepartmentId(departmentId);
+            }
+            u.setDepartmentName(rs.getString("p.Name"));
             return u;
         });
         int total = jdbcTemplate.queryForObject(countSql, Integer.class);
@@ -93,8 +100,8 @@ public class UserRepository {
         String password = user.getPassword();
         String encodePassword = PasswordUtil.encodePassword(password.isEmpty() ? DEFAULT_NEW_USER_PASSWORD : password);
         LocalDateTime dateTimeNow = LocalDateTime.now();
-        return jdbcTemplate.update("INSERT INTO user (Id, Name, NickName, PhoneNumber, Email, Password, Birthday, Gender, Status, CreateTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                UUID.randomUUID().toString(), user.getName(), user.getNickName(), user.getPhoneNumber(), user.getEmail(), encodePassword, user.getBirthday(), user.getGender(), 1, dateTimeNow);
+        return jdbcTemplate.update("INSERT INTO user (Id, Name, NickName, PhoneNumber, Email, Password, Birthday, Gender, Status, DepartmentId, CreateTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                UUID.randomUUID().toString(), user.getName(), user.getNickName(), user.getPhoneNumber(), user.getEmail(), encodePassword, user.getBirthday(), user.getGender(), 1, user.getDepartmentId(), dateTimeNow);
     }
 
     public int deleteById(String id) {
@@ -109,8 +116,8 @@ public class UserRepository {
                     Integer.class
             );
             if(count > 0) {
-                return jdbcTemplate.update("UPDATE user set Name =?, NickName =?, PhoneNumber=?, Gender=?, Birthday=?, Status=? where Id=?", user.getName(), user.getNickName(),
-                        user.getPhoneNumber(), user.getGender(), user.getBirthday(), user.getStatus(), user.getId());
+                return jdbcTemplate.update("UPDATE user set Name =?, NickName =?, PhoneNumber=?, Gender=?, Birthday=?, Status=?, DepartmentId=? where Id=?", user.getName(), user.getNickName(),
+                        user.getPhoneNumber(), user.getGender(), user.getBirthday(), user.getStatus(), user.getDepartmentId(), user.getId());
             }else {
                 return -1;
             }
@@ -121,35 +128,42 @@ public class UserRepository {
 
     public PageResponse<User> getFilterUserList(UserFilterOption filterOption) {
 
-        StringBuilder sql = new StringBuilder("SELECT * FROM user WHERE 1=1");
+        StringBuilder sql = new StringBuilder("SELECT * FROM user u left join department p on u.DepartmentId = p.Id WHERE 1=1");
         List<Object> params = new ArrayList<>();
         if (filterOption.getSearchText() != null && !filterOption.getSearchText().isEmpty()) {
-            sql.append(" AND (Name LIKE ? OR NickName LIKE ? OR PhoneNumber LIKE ?)");
+            sql.append(" AND (u.Name LIKE ? OR u.NickName LIKE ? OR u.PhoneNumber LIKE ?)");
             String likePattern = "%" + filterOption.getSearchText() + "%";
             params.add(likePattern);
             params.add(likePattern);
             params.add(likePattern);
         }
         if(filterOption.getGender() != -1) {
-            sql.append(" AND Gender = ?");
+            sql.append(" AND u.Gender = ?");
             params.add(filterOption.getGender());
         }
         int offset = (filterOption.getPage() - 1) * PAGE_SIZE;
-        sql.append(" ORDER BY Name, CreateTime LIMIT ? OFFSET ?");
+        sql.append(" ORDER BY u.Name, u.CreateTime LIMIT ? OFFSET ?");
         params.add(PAGE_SIZE);
         params.add(offset);
 
         List<User> users = jdbcTemplate.query(sql.toString(), params.toArray(), (rs, rowNum) -> {
             User u = new User();
-            u.setId(rs.getString("Id"));
-            u.setName(rs.getString("Name"));
+            u.setId(rs.getString("u.Id"));
+            u.setName(rs.getString("u.Name"));
             u.setNickName(rs.getString("NickName"));
             u.setEmail(rs.getString("Email"));
             u.setPhoneNumber(rs.getString("PhoneNumber"));
             u.setStatus(rs.getInt("Status"));
             u.setGender(rs.getInt("Gender"));
             u.setBirthday(rs.getDate("Birthday"));
-            u.setCreateTime(rs.getTimestamp("CreateTime"));
+            u.setCreateTime(rs.getTimestamp("u.CreateTime"));
+            int departmentId = rs.getInt("u.DepartmentId");
+            if (rs.wasNull()) {
+                u.setDepartmentId(null);
+            } else {
+                u.setDepartmentId(departmentId);
+            }
+            u.setDepartmentName(rs.getString("p.Name"));
             return u;
         });
         StringBuilder countSql = new StringBuilder("SELECT COUNT(*) FROM user WHERE 1=1");
